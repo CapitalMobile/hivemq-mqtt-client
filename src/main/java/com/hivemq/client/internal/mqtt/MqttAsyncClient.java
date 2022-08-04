@@ -157,6 +157,45 @@ public class MqttAsyncClient implements Mqtt5AsyncClient {
                 .subscribeSingleFuture(new CallbackSubscriber(callback)), mqttSubscribe);
     }
 
+    public @NotNull CompletableFuture<@NotNull Mqtt5SubAck> fakeSubscribe(final @Nullable Mqtt5Subscribe subscribe) {
+        final MqttSubscribe mqttSubscribe = MqttChecks.subscribe(subscribe);
+
+        return handleSubAck(RxFutureConverter.toFuture(delegate.subscribe(mqttSubscribe)), mqttSubscribe);
+    }
+
+    public @NotNull CompletableFuture<@NotNull Mqtt5SubAck> fakeSubscribe(
+            final @Nullable Mqtt5Subscribe subscribe, final @Nullable Consumer<@NotNull Mqtt5Publish> callback) {
+
+        return fakeSubscribe(subscribe, callback, false);
+    }
+
+    public @NotNull CompletableFuture<@NotNull Mqtt5SubAck> fakeSubscribe(
+            final @Nullable Mqtt5Subscribe subscribe,
+            final @Nullable Consumer<@NotNull Mqtt5Publish> callback,
+            final boolean manualAcknowledgement) {
+
+        final MqttSubscribe mqttSubscribe = MqttChecks.subscribe(subscribe);
+        Checks.notNull(callback, "Callback");
+
+        return handleSubAck(delegate.fakeSubscribePublishes(mqttSubscribe, manualAcknowledgement)
+                .subscribeSingleFuture(new CallbackSubscriber(callback)), mqttSubscribe);
+    }
+
+    public @NotNull CompletableFuture<@NotNull Mqtt5SubAck> fakeSubscribe(
+            final @Nullable Mqtt5Subscribe subscribe,
+            final @Nullable Consumer<@NotNull Mqtt5Publish> callback,
+            final @Nullable Executor executor,
+            final boolean manualAcknowledgement) {
+
+        final MqttSubscribe mqttSubscribe = MqttChecks.subscribe(subscribe);
+        Checks.notNull(callback, "Callback");
+        Checks.notNull(executor, "Executor");
+
+        return handleSubAck(delegate.fakeSubscribePublishesUnsafe(mqttSubscribe, manualAcknowledgement)
+                .observeOnBoth(Schedulers.from(executor), true)
+                .subscribeSingleFuture(new CallbackSubscriber(callback)), mqttSubscribe);
+    }
+
     @Override
     public @NotNull CompletableFuture<@NotNull Mqtt5SubAck> subscribe(
             final @Nullable Mqtt5Subscribe subscribe,

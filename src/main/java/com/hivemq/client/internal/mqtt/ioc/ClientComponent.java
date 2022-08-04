@@ -19,6 +19,7 @@ package com.hivemq.client.internal.mqtt.ioc;
 import com.hivemq.client.internal.mqtt.MqttClientConfig;
 import com.hivemq.client.internal.mqtt.handler.publish.incoming.MqttIncomingQosHandler;
 import com.hivemq.client.internal.mqtt.handler.publish.outgoing.MqttOutgoingQosHandler;
+import com.hivemq.client.internal.mqtt.handler.subscribe.MqttFakeSubscriptionHandler;
 import com.hivemq.client.internal.mqtt.handler.subscribe.MqttSubscriptionHandler;
 import dagger.BindsInstance;
 import dagger.Subcomponent;
@@ -36,6 +37,8 @@ public interface ClientComponent {
     ConnectionComponent.@NotNull Builder connectionComponentBuilder();
 
     @NotNull MqttSubscriptionHandler subscriptionHandler();
+
+    @NotNull MqttFakeSubscriptionHandler fakeSubscriptionHandler();
 
     @NotNull MqttIncomingQosHandler incomingQosHandler();
 

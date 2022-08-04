@@ -159,6 +159,60 @@ public class Mqtt3AsyncClientView implements Mqtt3AsyncClient {
     }
 
     @Override
+    public Mqtt3SubscribeAndCallbackBuilder.@NotNull Start fakeSubscribeWith() {
+        return new Mqtt3FakeSubscribeViewAndCallbackBuilder();
+    }
+
+    @Override
+    public @NotNull CompletableFuture<@NotNull Mqtt3SubAck> fakeSubscribe(
+            @NotNull final Mqtt3Subscribe subscribe, @NotNull final Consumer<@NotNull Mqtt3Publish> callback) {
+        final MqttSubscribe mqttSubscribe = MqttChecks.subscribe(subscribe);
+        Checks.notNull(callback, "Callback");
+
+        return handleSubAck(delegate.fakeSubscribe(mqttSubscribe, callbackView(callback)));
+    }
+
+    @Override
+    public @NotNull CompletableFuture<@NotNull Mqtt3SubAck> fakeSubscribe(
+            final @Nullable Mqtt3Subscribe subscribe,
+            final @Nullable Consumer<@NotNull Mqtt3Publish> callback,
+            final @Nullable Executor executor) {
+
+        return fakeSubscribe(subscribe, callback, executor, false);
+    }
+
+    @Override
+    public @NotNull CompletableFuture<@NotNull Mqtt3SubAck> fakeSubscribe(
+            @NotNull Mqtt3Subscribe subscribe,
+            @NotNull Consumer<@NotNull Mqtt3Publish> callback,
+            @NotNull Executor executor,
+            boolean manualAcknowledgement) {
+        final MqttSubscribe mqttSubscribe = MqttChecks.subscribe(subscribe);
+        Checks.notNull(callback, "Callback");
+        Checks.notNull(executor, "Executor");
+
+        return handleSubAck(delegate.fakeSubscribe(mqttSubscribe, callbackView(callback), executor, manualAcknowledgement));
+    }
+
+    @Override
+    public @NotNull CompletableFuture<@NotNull Mqtt3SubAck> fakeSubscribe(
+            @NotNull Mqtt3Subscribe subscribe,
+            @NotNull Consumer<@NotNull Mqtt3Publish> callback,
+            boolean manualAcknowledgement) {
+        final MqttSubscribe mqttSubscribe = MqttChecks.subscribe(subscribe);
+        Checks.notNull(callback, "Callback");
+
+        return handleSubAck(delegate.fakeSubscribe(mqttSubscribe, callbackView(callback), manualAcknowledgement));
+    }
+
+    @Override
+    public @NotNull CompletableFuture<@NotNull Mqtt3SubAck> fakeSubscribe(
+            @NotNull final Mqtt3Subscribe subscribe) {
+        final MqttSubscribe mqttSubscribe = MqttChecks.subscribe(subscribe);
+        return handleSubAck(delegate.fakeSubscribe(mqttSubscribe));
+    }
+
+    @Override
     public @NotNull Mqtt3SubscribeViewAndCallbackBuilder subscribeWith() {
         return new Mqtt3SubscribeViewAndCallbackBuilder();
     }
@@ -318,6 +372,54 @@ public class Mqtt3AsyncClientView implements Mqtt3AsyncClient {
                 return subscribe(subscribe, callback, manualAcknowledgement);
             }
             return subscribe(subscribe, callback, executor, manualAcknowledgement);
+        }
+    }
+
+    private class Mqtt3FakeSubscribeViewAndCallbackBuilder
+            extends Mqtt3SubscribeViewBuilder<Mqtt3FakeSubscribeViewAndCallbackBuilder>
+            implements Mqtt3SubscribeAndCallbackBuilder.Start.Complete, Mqtt3SubscribeAndCallbackBuilder.Call.Ex {
+
+        private @Nullable Consumer<Mqtt3Publish> callback;
+        private @Nullable Executor executor;
+        private boolean manualAcknowledgement;
+
+        @Override
+        protected @NotNull Mqtt3FakeSubscribeViewAndCallbackBuilder self() {
+            return this;
+        }
+
+        @Override
+        public @NotNull Mqtt3FakeSubscribeViewAndCallbackBuilder callback(final @Nullable Consumer<Mqtt3Publish> callback) {
+            this.callback = Checks.notNull(callback, "Callback");
+            return this;
+        }
+
+        @Override
+        public @NotNull Mqtt3FakeSubscribeViewAndCallbackBuilder executor(final @Nullable Executor executor) {
+            this.executor = Checks.notNull(executor, "Executor");
+            return this;
+        }
+
+        @Override
+        public @NotNull Mqtt3FakeSubscribeViewAndCallbackBuilder manualAcknowledgement(
+                final boolean manualAcknowledgement) {
+
+            this.manualAcknowledgement = manualAcknowledgement;
+            return this;
+        }
+
+        @Override
+        public @NotNull CompletableFuture<Mqtt3SubAck> send() {
+            final Mqtt3Subscribe subscribe = build();
+            if (callback == null) {
+                Checks.state(executor == null, "Executor must not be given if callback is null.");
+                Checks.state(!manualAcknowledgement, "Manual acknowledgement must not be true if callback is null.");
+                return fakeSubscribe(subscribe);
+            }
+            if (executor == null) {
+                return fakeSubscribe(subscribe, callback, manualAcknowledgement);
+            }
+            return fakeSubscribe(subscribe, callback, executor, manualAcknowledgement);
         }
     }
 }

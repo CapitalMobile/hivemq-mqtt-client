@@ -179,6 +179,102 @@ public interface Mqtt3AsyncClient extends Mqtt3Client {
             boolean manualAcknowledgement);
 
     /**
+     * Subscribes this client with the given Subscribe message, and won't check if the subscriptions were succeed.
+     * <p>
+     * See {@link #publishes(MqttGlobalPublishFilter, Consumer)} or {@link #publishes(MqttGlobalPublishFilter, Consumer,
+     * Executor)} to consume the incoming Publish messages. Alternatively, call {@link #subscribe(Mqtt3Subscribe,
+     * Consumer)} or {@link #subscribe(Mqtt3Subscribe, Consumer, Executor)} to consume the incoming Publish messages
+     * matching the subscriptions of the Subscribe message directly.
+     *
+     * @param subscribe the Subscribe messages sent to the broker.
+     * @return a {@link CompletableFuture} which
+     *         <ul>
+     *           <li>completes normally with any SubAck message
+     *           <li>completes exceptionally with a different exception if an error occurred before the Subscribe
+     *             message was sent or before a SubAck message was received.
+     *         </ul>
+     */
+    @NotNull CompletableFuture<@NotNull Mqtt3SubAck> fakeSubscribe(@NotNull Mqtt3Subscribe subscribe);
+
+    /**
+     * Subscribes this client with the given Subscribe message and consumes the incoming Publish messages matching the
+     * subscriptions of the Subscribe message with a callback.
+     *
+     * @param subscribe the Subscribe messages sent to the broker.
+     * @param callback  the callback for consuming the incoming Publish messages matching the subscriptions of the
+     *                  Subscribe message.
+     * @return see {@link #fakeSubscribe(Mqtt3Subscribe)} (Mqtt3Subscribe)}.
+     * @see #fakeSubscribe(Mqtt3Subscribe, Consumer)
+     * @see #fakeSubscribe(Mqtt3Subscribe, Consumer, boolean)
+     * @see #fakeSubscribe(Mqtt3Subscribe, Consumer, Executor, boolean)
+     */
+    @NotNull CompletableFuture<@NotNull Mqtt3SubAck> fakeSubscribe(
+            @NotNull Mqtt3Subscribe subscribe,
+            @NotNull Consumer<@NotNull Mqtt3Publish> callback);
+
+    /**
+     * Subscribes this client with the given Subscribe message and consumes the incoming Publish messages matching the
+     * subscriptions of the Subscribe message with a callback.
+     * <p>
+     * The future is completed and the callback is executed on the given executor.
+     *
+     * @param subscribe the Subscribe messages sent to the broker.
+     * @param callback  the callback for consuming the incoming Publish messages matching the subscriptions of the
+     *                  Subscribe message.
+     * @param executor  the executor where the future is completed and the callback is executed on.
+     * @return see {@link #subscribe(Mqtt3Subscribe)}.
+     * @see #fakeSubscribe(Mqtt3Subscribe, Consumer)
+     * @see #fakeSubscribe(Mqtt3Subscribe, Consumer, boolean)
+     * @see #fakeSubscribe(Mqtt3Subscribe, Consumer, Executor, boolean)
+     */
+    @NotNull CompletableFuture<@NotNull Mqtt3SubAck> fakeSubscribe(
+            @NotNull Mqtt3Subscribe subscribe,
+            @NotNull Consumer<@NotNull Mqtt3Publish> callback,
+            @NotNull Executor executor);
+
+    /**
+     * Subscribes this client with the given Subscribe message and consumes the incoming Publish messages matching the
+     * subscriptions of the Subscribe message with a callback.
+     * <p>
+     * The future is completed and the callback is executed on the given executor.
+     *
+     * @param subscribe             the Subscribe messages sent to the broker.
+     * @param callback              the callback for consuming the incoming Publish messages matching the subscriptions
+     *                              of the Subscribe message.
+     * @param executor              the executor where the future is completed and the callback is executed on.
+     * @param manualAcknowledgement whether the Publish messages are acknowledged manually.
+     * @return see {@link #fakeSubscribe(Mqtt3Subscribe)}.
+     * @see #fakeSubscribe(Mqtt3Subscribe, Consumer)
+     * @see #fakeSubscribe(Mqtt3Subscribe, Consumer, boolean)
+     * @see #fakeSubscribe(Mqtt3Subscribe, Consumer, Executor, boolean)
+     * @since 1.2
+     */
+    @NotNull CompletableFuture<@NotNull Mqtt3SubAck> fakeSubscribe(
+            @NotNull Mqtt3Subscribe subscribe,
+            @NotNull Consumer<@NotNull Mqtt3Publish> callback,
+            @NotNull Executor executor,
+            boolean manualAcknowledgement);
+
+    /**
+     * Subscribes this client with the given Subscribe message and consumes the incoming Publish messages matching the
+     * subscriptions of the Subscribe message with a callback.
+     *
+     * @param subscribe             the Subscribe messages sent to the broker.
+     * @param callback              the callback for consuming the incoming Publish messages matching the subscriptions
+     *                              of the Subscribe message.
+     * @param manualAcknowledgement whether the Publish messages are acknowledged manually.
+     * @return see {@link #subscribe(Mqtt3Subscribe)}.
+     * @see #fakeSubscribe(Mqtt3Subscribe, Consumer)
+     * @see #fakeSubscribe(Mqtt3Subscribe, Consumer, boolean)
+     * @see #fakeSubscribe(Mqtt3Subscribe, Consumer, Executor, boolean)
+     * @since 1.2
+     */
+    @NotNull CompletableFuture<@NotNull Mqtt3SubAck> fakeSubscribe(
+            @NotNull Mqtt3Subscribe subscribe,
+            @NotNull Consumer<@NotNull Mqtt3Publish> callback,
+            boolean manualAcknowledgement);
+
+    /**
      * Fluent counterpart of {@link #subscribe(Mqtt3Subscribe)}, {@link #subscribe(Mqtt3Subscribe, Consumer, boolean)}
      * and {@link #subscribe(Mqtt3Subscribe, Consumer, Executor, boolean)}.
      * <p>
@@ -198,6 +294,27 @@ public interface Mqtt3AsyncClient extends Mqtt3Client {
      */
     @CheckReturnValue
     Mqtt3SubscribeAndCallbackBuilder.@NotNull Start subscribeWith();
+
+    /**
+     * Fluent counterpart of {@link #fakeSubscribe(Mqtt3Subscribe)}, {@link #fakeSubscribe(Mqtt3Subscribe, Consumer, boolean)}
+     * and {@link #fakeSubscribe(Mqtt3Subscribe, Consumer, Executor, boolean)}.
+     * <p>
+     * Calling {@link Mqtt3SubscribeAndCallbackBuilder.Complete#send()} on the returned builder has the same effect as
+     * calling one of the following methods:
+     * <ul>
+     *   <li>{@link #fakeSubscribe(Mqtt3Subscribe)} if no callback has been supplied to the builder
+     *   <li>{@link #fakeSubscribe(Mqtt3Subscribe, Consumer)} if only a callback has been supplied to the builder
+     *   <li>{@link #fakeSubscribe(Mqtt3Subscribe, Consumer, Executor)} if a callback and an executor have been supplied to
+     *     the builder
+     * </ul>
+     *
+     * @return the fluent builder for the Subscribe message.
+     * @see #fakeSubscribe(Mqtt3Subscribe)
+     * @see #fakeSubscribe(Mqtt3Subscribe, Consumer, boolean)
+     * @see #fakeSubscribe(Mqtt3Subscribe, Consumer, Executor, boolean)
+     */
+    @CheckReturnValue
+    Mqtt3SubscribeAndCallbackBuilder.@NotNull Start fakeSubscribeWith();
 
     /**
      * Globally consumes all incoming Publish messages matching the given filter.

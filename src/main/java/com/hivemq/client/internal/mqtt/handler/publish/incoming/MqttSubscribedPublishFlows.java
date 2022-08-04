@@ -36,6 +36,11 @@ public interface MqttSubscribedPublishFlows {
             int subscriptionIdentifier,
             @Nullable MqttSubscribedPublishFlow flow);
 
+    void fakeSubscribe(
+            @NotNull MqttSubscription subscription,
+            int subscriptionIdentifier,
+            @Nullable MqttSubscribedPublishFlow flow);
+
     void suback(@NotNull MqttTopicFilterImpl topicFilter, int subscriptionIdentifier, boolean error);
 
     void unsubscribe(@NotNull MqttTopicFilterImpl topicFilter);

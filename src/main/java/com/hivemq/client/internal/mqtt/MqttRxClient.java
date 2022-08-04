@@ -19,11 +19,13 @@ package com.hivemq.client.internal.mqtt;
 import com.hivemq.client.internal.mqtt.handler.auth.MqttReAuthCompletable;
 import com.hivemq.client.internal.mqtt.handler.connect.MqttConnAckSingle;
 import com.hivemq.client.internal.mqtt.handler.disconnect.MqttDisconnectCompletable;
+import com.hivemq.client.internal.mqtt.handler.publish.incoming.MqttFakeSubscribedPublishFlowable;
 import com.hivemq.client.internal.mqtt.handler.publish.incoming.MqttGlobalIncomingPublishFlowable;
 import com.hivemq.client.internal.mqtt.handler.publish.incoming.MqttSubscribedPublishFlowable;
 import com.hivemq.client.internal.mqtt.handler.publish.outgoing.MqttAckFlowable;
 import com.hivemq.client.internal.mqtt.handler.publish.outgoing.MqttAckSingle;
 import com.hivemq.client.internal.mqtt.handler.publish.outgoing.MqttAckSingleFlowable;
+import com.hivemq.client.internal.mqtt.handler.subscribe.MqttFakeSubAckSingle;
 import com.hivemq.client.internal.mqtt.handler.subscribe.MqttSubAckSingle;
 import com.hivemq.client.internal.mqtt.handler.subscribe.MqttUnsubAckSingle;
 import com.hivemq.client.internal.mqtt.message.connect.MqttConnect;
@@ -107,6 +109,19 @@ public class MqttRxClient implements Mqtt5RxClient {
         return new MqttSubAckSingle(subscribe, clientConfig);
     }
 
+    public @NotNull Single<Mqtt5SubAck> fakeSubscribe(final @Nullable Mqtt5Subscribe subscribe) {
+        return fakeSubscribe(MqttChecks.subscribe(subscribe));
+    }
+
+    @NotNull Single<Mqtt5SubAck> fakeSubscribe(final @NotNull MqttSubscribe subscribe) {
+        return fakeSubscribeUnsafe(subscribe).observeOn(clientConfig.getExecutorConfig().getApplicationScheduler());
+    }
+
+    @NotNull Single<Mqtt5SubAck> fakeSubscribeUnsafe(final @NotNull MqttSubscribe subscribe) {
+        return new MqttFakeSubAckSingle(subscribe, clientConfig);
+    }
+
+
     @Override
     public MqttSubscribeBuilder.@NotNull Nested<Single<Mqtt5SubAck>> subscribeWith() {
         return new MqttSubscribeBuilder.Nested<>(this::subscribe);
@@ -145,10 +160,23 @@ public class MqttRxClient implements Mqtt5RxClient {
                 clientConfig.getExecutorConfig().getApplicationScheduler(), true);
     }
 
+    @NotNull FlowableWithSingle<Mqtt5Publish, Mqtt5SubAck> fakeSubscribePublishes(
+            final @NotNull MqttSubscribe subscribe, final boolean manualAcknowledgement) {
+
+        return fakeSubscribePublishesUnsafe(subscribe, manualAcknowledgement).observeOnBoth(
+                clientConfig.getExecutorConfig().getApplicationScheduler(), true);
+    }
+
     @NotNull FlowableWithSingle<Mqtt5Publish, Mqtt5SubAck> subscribePublishesUnsafe(
             final @NotNull MqttSubscribe subscribe, final boolean manualAcknowledgement) {
 
         return new MqttSubscribedPublishFlowable(subscribe, clientConfig, manualAcknowledgement);
+    }
+
+    @NotNull FlowableWithSingle<Mqtt5Publish, Mqtt5SubAck> fakeSubscribePublishesUnsafe(
+            final @NotNull MqttSubscribe subscribe, final boolean manualAcknowledgement) {
+
+        return new MqttFakeSubscribedPublishFlowable(subscribe, clientConfig, manualAcknowledgement);
     }
 
     @Override

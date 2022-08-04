@@ -60,6 +60,23 @@ public class MqttSubscribedPublishFlowTree implements MqttSubscribedPublishFlows
     }
 
     @Override
+    public void fakeSubscribe(
+            final @NotNull MqttSubscription subscription,
+            final int subscriptionIdentifier,
+            final @Nullable MqttSubscribedPublishFlow flow) {
+
+        final TopicTreeEntry entry = new TopicTreeEntry(subscription, subscriptionIdentifier, flow);
+        final MqttTopicIterator topicIterator = MqttTopicIterator.of(subscription.getTopicFilter());
+        TopicTreeNode node = rootNode;
+        if (node == null) {
+            rootNode = node = new TopicTreeNode(null, null);
+        }
+        while (node != null) {
+            node = node.subscribe(topicIterator, entry);
+        }
+    }
+
+    @Override
     public void suback(
             final @NotNull MqttTopicFilterImpl topicFilter, final int subscriptionIdentifier, final boolean error) {
 
